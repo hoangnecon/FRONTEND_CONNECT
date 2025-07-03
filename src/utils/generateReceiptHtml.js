@@ -1,10 +1,13 @@
 // src/utils/generateReceiptHtml.js
 import { initialPrintSettings } from '../data/initialPrintSettings';
 
-export const generateReceiptHtml = (orderData, printSettings, bankSettings, banks, type) => {
-    // Đảm bảo orderData và printSettings hợp lệ
-    const currentPrintSettings = printSettings || initialPrintSettings;
-    const { items, total, table, cashier } = orderData; // orderData sẽ có các thông tin này
+export const generateReceiptHtml = (orderData, allPrintSettings, bankSettings, banks, type) => {
+    // Determine which set of settings to use based on the type
+    const printSettings = allPrintSettings || initialPrintSettings;
+    const isProvisional = type === 'provisional';
+    const currentSettings = isProvisional ? printSettings : printSettings; // Use same top-level settings, specific ones are inside
+
+    const { items, total, table, cashier } = orderData;
     const tableName = table || 'Không xác định';
     const currentCashier = cashier || 'N/A';
 
@@ -18,9 +21,8 @@ export const generateReceiptHtml = (orderData, printSettings, bankSettings, bank
     });
 
     let qrCodeHtml = '';
-    // Chỉ tạo QR code nếu là hóa đơn tạm tính (provisional) và showQrCode được bật
-    // Đồng thời phải có bankSettings hợp lệ và danh sách banks đã tải
-    if (currentPrintSettings.showQrCode && type === 'provisional' && bankSettings?.bin && bankSettings?.accountNumber && banks?.length > 0) {
+    // Only generate QR code if it's a provisional receipt and settings allow
+    if (isProvisional && currentSettings.showQrCode && bankSettings?.bin && bankSettings?.accountNumber && banks?.length > 0) {
         const description = `TT don hang ban ${tableName}`;
         const selectedBank = banks.find(b => b.bin === bankSettings.bin);
         const bankCode = selectedBank ? selectedBank.code : bankSettings.bin;
@@ -29,10 +31,9 @@ export const generateReceiptHtml = (orderData, printSettings, bankSettings, bank
         
         qrCodeHtml = `<div style="text-align: center; margin-top: 10px; margin-bottom: 5px;">
                         <img src="${qrCodeUrl}" alt="Mã QR Thanh Toán" style="width: 50mm; height: 50mm;"/>
-                        <p style="${getStyleString(currentPrintSettings.footerStyle)}; margin-top: 5px; font-weight: bold;">Quét mã QR để thanh toán</p>
+                        <p style="${getStyleString(currentSettings.footerStyle)}; margin-top: 5px; font-weight: bold;">Quét mã QR để thanh toán</p>
                       </div>`;
-    } else if (currentPrintSettings.showQrCode && type === 'provisional') {
-        // Nếu showQrCode bật nhưng thiếu thông tin ngân hàng cho preview hoặc print
+    } else if (isProvisional && currentSettings.showQrCode) {
         const missingInfo = [];
         if (!bankSettings?.bin || !bankSettings?.accountNumber) {
             missingInfo.push("Số tài khoản");
@@ -51,16 +52,44 @@ export const generateReceiptHtml = (orderData, printSettings, bankSettings, bank
                           </div>`;
     }
 
+    // Header section content based on receipt type
+    let headerSectionHtml = '';
+    if (isProvisional && currentSettings.showStoreName) {
+        headerSectionHtml = `
+            <div class="print-header">
+                <h1>${currentSettings.restaurantName}</h1>
+                <p>${currentSettings.address}</p>
+                <p>ĐT: ${currentSettings.phone}</p>
+            </div>
+        `;
+    } else if (!isProvisional && currentSettings.showKitchenStoreName) {
+        headerSectionHtml = `
+            <div class="print-header">
+                <h1>${currentSettings.kitchenRestaurantName}</h1>
+                <p>${currentSettings.kitchenAddress}</p>
+                <p>ĐT: ${currentSettings.kitchenPhone}</p>
+            </div>
+        `;
+    }
+
+    // Order info line styles
+    const orderInfoStyle = isProvisional ? getStyleString(currentSettings.orderInfoStyle) : getStyleString(currentSettings.kitchenOrderInfoStyle);
+
+    // Items header and body styles
+    const itemsHeaderStyle = isProvisional ? getStyleString(currentSettings.itemsHeaderStyle) : getStyleString(currentSettings.kitchenItemsHeaderStyle);
+    const itemsBodyStyle = isProvisional ? getStyleString(currentSettings.itemsBodyStyle) : getStyleString(currentSettings.kitchenItemsBodyStyle);
+
+
     return `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>${type === 'provisional' ? 'Phiếu tạm tính' : 'Phiếu bếp'}</title>
+            <title>${isProvisional ? 'Phiếu tạm tính' : 'Phiếu bếp'}</title>
             <style>
                 body { margin: 0; padding: 0; }
                 .print-content {
-                    font-family: '${currentPrintSettings.fontFamily}', monospace;
-                    line-height: ${currentPrintSettings.lineSpacing}mm;
+                    font-family: '${currentSettings.fontFamily}', monospace;
+                    line-height: ${currentSettings.lineSpacing}mm;
                     color: #000;
                     width: 57mm; /* Khổ giấy K57 */
                     margin: 0 auto; /* Căn giữa */
@@ -69,71 +98,70 @@ export const generateReceiptHtml = (orderData, printSettings, bankSettings, bank
                     background: white; /* Đảm bảo nền trắng */
                 }
                 .print-header { text-align: center; margin-bottom: 5px; }
-                .print-header h1 { margin: 0; ${getStyleString(currentPrintSettings.headerStyle)} }
-                .print-header p { margin: 1px 0; ${getStyleString(currentPrintSettings.subHeaderStyle)} }
+                .print-header h1 { margin: 0; ${isProvisional ? getStyleString(currentSettings.headerStyle) : getStyleString(currentSettings.kitchenHeaderStyle)} }
+                .print-header p { margin: 1px 0; ${isProvisional ? getStyleString(currentSettings.subHeaderStyle) : getStyleString(currentSettings.kitchenHeaderStyle)} }
                 .print-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
                 .print-table th, .print-table td { text-align: left; padding: 2px 0; vertical-align: top; word-break: break-word; }
                 .col-sl { text-align: center; width: 30px; }
                 .col-thanh-tien { text-align: right; }
                 .line { border-top: 1px dashed #000; margin: 5px 0; }
-                .total-section { text-align: right; ${getStyleString(currentPrintSettings.totalStyle)} margin-top: 5px; }
-                .footer { text-align: center; margin-top: 10px; ${getStyleString(currentPrintSettings.footerStyle)} }
+                .total-section { text-align: right; ${getStyleString(currentSettings.totalStyle)} margin-top: 5px; }
+                .footer { text-align: center; margin-top: 10px; ${getStyleString(currentSettings.footerStyle)} }
                 
                 /* Print specific styles */
                 @media print {
                     body {
                         background: none !important;
-                        -webkit-print-color-adjust: exact !important; /* Đảm bảo màu nền được in */
+                        -webkit-print-color-adjust: exact !important;
                         color-adjust: exact !important;
                     }
                     .print-content {
                         box-shadow: none !important;
                         border: none !important;
-                        font-size: ${currentPrintSettings.itemsBodyStyle.fontSize || 9}pt;
+                        font-size: ${isProvisional ? currentSettings.itemsBodyStyle.fontSize : currentSettings.kitchenItemsBodyStyle.fontSize}pt;
                     }
                 }
             </style>
         </head>
         <body>
             <div class="print-content">
-                ${currentPrintSettings.showStoreName?`
-                <div class="print-header">
-                    <h1>${currentPrintSettings.restaurantName}</h1>
-                    <p>${currentPrintSettings.address}</p>
-                    <p>ĐT: ${currentPrintSettings.phone}</p>
-                </div>`:''}
-                ${currentPrintSettings.useSeparatorLine?'<div class="line"></div>':''}
-                <div style="${getStyleString(currentPrintSettings.orderInfoStyle)}">
-                    <p>Bàn: ${tableName} | ${currentPrintSettings.showDateTime?`Ngày: ${currentDateFormatted}`:''}</p>
-                    ${currentPrintSettings.showCashier?`<p>Thu ngân: ${currentCashier}</p>`:''}
+                ${headerSectionHtml}
+                ${currentSettings.useSeparatorLine?'<div class="line"></div>':''}
+                <div style="text-align: center; font-weight: bold; margin-bottom: 5px; font-size: ${isProvisional ? currentSettings.headerStyle.fontSize : currentSettings.kitchenHeaderStyle.fontSize}pt;">
+                    ${isProvisional ? 'PHIẾU TẠM TÍNH' : currentSettings.kitchenOrderHeader}
                 </div>
-                ${currentPrintSettings.useSeparatorLine?'<div class="line"></div>':''}
+                <div style="${orderInfoStyle}">
+                    <p>Bàn: ${tableName} | ${currentSettings.showDateTime?`Ngày: ${currentDateFormatted}`:''}</p>
+                    ${isProvisional && currentSettings.showCashier ? `<p>Thu ngân: ${currentCashier}</p>` : ''}
+                    ${!isProvisional && currentSettings.showKitchenCashier ? `<p>Thu ngân: ${currentCashier}</p>` : ''}
+                </div>
+                ${currentSettings.useSeparatorLine?'<div class="line"></div>':''}
                 <table class="print-table">
-                    <thead style="${getStyleString(currentPrintSettings.itemsHeaderStyle)}">
+                    <thead style="${itemsHeaderStyle}">
                         <tr>
                             <th>Tên món</th>
                             <th class="col-sl">SL</th>
-                            ${type === 'provisional' ? '<th class="col-thanh-tien">T.Tiền</th>' : ''}
+                            ${isProvisional ? '<th class="col-thanh-tien">T.Tiền</th>' : ''}
                         </tr>
                     </thead>
-                    <tbody style="${getStyleString(currentPrintSettings.itemsBodyStyle)}">
+                    <tbody style="${itemsBodyStyle}">
                         ${items.map(item => `
                         <tr>
                             <td>${item.name}</td>
                             <td class="col-sl">${item.quantity}</td>
-                            ${type === 'provisional' ? `<td class="col-thanh-tien">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>` : ''}
+                            ${isProvisional ? `<td class="col-thanh-tien">${(item.price * item.quantity).toLocaleString('vi-VN')}</td>` : ''}
                         </tr>`).join('')}
                     </tbody>
                 </table>
-                ${currentPrintSettings.useSeparatorLine?'<div class="line"></div>':''}
-                ${type === 'provisional' ? `
+                ${currentSettings.useSeparatorLine?'<div class="line"></div>':''}
+                ${isProvisional ? `
                 <div class="total-section">
-                    ${currentPrintSettings.totalLabel} ${total.toLocaleString('vi-VN')}đ
+                    ${currentSettings.totalLabel} ${total.toLocaleString('vi-VN')}đ
                 </div>` : ''}
-                ${currentPrintSettings.showWifi && currentPrintSettings.wifiPassword?`
-                <div style="text-align: center; margin-top: 10px; ${getStyleString(currentPrintSettings.wifiStyle)}">Pass Wi-Fi: ${currentPrintSettings.wifiPassword}</div>`:''}
+                ${isProvisional && currentSettings.showWifi && currentSettings.wifiPassword?`
+                <div style="text-align: center; margin-top: 10px; ${getStyleString(currentSettings.wifiStyle)}">Pass Wi-Fi: ${currentSettings.wifiPassword}</div>`:''}
                 <div class="footer">
-                    ${type === 'provisional' ? currentPrintSettings.thankYouMessage : '--- YÊU CẦU BẾP CHUẨN BỊ ---'}
+                    ${isProvisional ? currentSettings.thankYouMessage : currentSettings.kitchenFooterMessage}
                 </div>
                 ${qrCodeHtml}
             </div>

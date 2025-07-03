@@ -122,17 +122,8 @@ function App() {
   }, [receiptToPrint]);
 
 
-  const processPaymentAndOrders = useCallback((paymentData, type = 'full') => {
+  const processPaymentAndOrders = useCallback((paymentData, printType) => {
     console.log('processPaymentAndOrders: Bắt đầu xử lý.');
-
-    let receiptType;
-    if (type === 'provisional') {
-      receiptType = 'provisional';
-    } else if (type === 'full') {
-      receiptType = 'provisional';
-    } else {
-      receiptType = 'kitchen';
-    }
 
     const currentOrderItems = orders[selectedTable] || [];
     const orderTotalAmount = currentOrderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -148,7 +139,7 @@ function App() {
     const savedSettings = localStorage.getItem('printSettings');
     const currentPrintSettings = savedSettings ? { ...initialPrintSettings, ...JSON.parse(savedSettings) } : initialPrintSettings;
 
-    const htmlContent = generateReceiptHtml(orderDataForHtml, currentPrintSettings, bankSettings, banks, receiptType);
+    const htmlContent = generateReceiptHtml(orderDataForHtml, currentPrintSettings, bankSettings, banks, printType);
 
     console.log("processPaymentAndOrders: Generated HTML Content length:", htmlContent ? htmlContent.length : 0);
 
@@ -159,7 +150,7 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           html: htmlContent,
-          type: receiptType, // Gửi type để agent có thể log hoặc xử lý nếu cần
+          type: printType, // Gửi type để agent có thể log hoặc xử lý nếu cần
         }),
       })
         .then(res => {
@@ -174,7 +165,7 @@ function App() {
           addNotification({
             id: `print-success-${Date.now()}`,
             type: 'success',
-            message: result.message || 'Hóa đơn đã được gửi đi in.',
+            message: result.message || `Đã gửi lệnh in ${printType === 'provisional' ? 'phiếu tạm tính' : 'phiếu bếp'} thành công.`,
           });
           // Kích hoạt hiển thị hóa đơn trên trình duyệt sau khi gửi lệnh in đến agent
           setReceiptToPrint({ html: htmlContent });
@@ -196,9 +187,9 @@ function App() {
       });
     }
 
-    if (type === 'full') {
+    if (printType === 'full') { // Only clear table for full payment
       clearTable();
-    } else if (type === 'partial') {
+    } else if (printType === 'partial') {
       const currentOrder = [...(orders[selectedTable] || [])];
       const updatedOrder = currentOrder.map((orderItem) => {
         const paidItem = paymentData.paidItems.find((p) => p.id === orderItem.id);

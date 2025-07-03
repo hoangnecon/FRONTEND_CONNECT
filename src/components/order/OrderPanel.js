@@ -87,67 +87,65 @@ const PartialPaymentDialog = ({
     };
     
     return (
-    <>
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-primary-main rounded-2xl w-full max-w-lg max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
-          <div className="p-4 md:p-6 border-b flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-bold text-primary-headline">Thanh toán một phần</h2>
-              <button onClick={() => setShowPartialPaymentDialog(false)} className="p-2 rounded-full hover:bg-gray-200">
-                  <X size={24} />
-              </button>
-          </div>
-  
-          <div className="flex-1 p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
-            <div>
-              <h3 className="text-lg font-bold text-primary-headline mb-4">Chọn món thanh toán</h3>
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
-                {orderItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-primary-secondary">
-                    <div>
-                      <h4 className="font-bold">{item.name}</h4>
-                      <p className="text-sm">{item.price.toLocaleString('vi-VN')}đ</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => handleQuantityChange(item, -1)} className="w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400">-</button>
-                      <span className="font-bold text-lg w-8 text-center">{selectedItems[item.id]?.quantity || 0}</span>
-                      <button onClick={() => handleQuantityChange(item, 1)} className="w-8 h-8 rounded-full bg-primary-button text-white hover:bg-primary-highlight">+</button>
-                    </div>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-primary-main rounded-2xl w-full max-w-lg max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
+        <div className="p-4 md:p-6 border-b flex items-center justify-between">
+            <h2 className="text-xl md:text-2xl font-bold text-primary-headline">Thanh toán một phần</h2>
+            <button onClick={() => setShowPartialPaymentDialog(false)} className="p-2 rounded-full hover:bg-gray-200">
+                <X size={24} />
+            </button>
+        </div>
+
+        <div className="flex-1 p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto">
+          <div>
+            <h3 className="text-lg font-bold text-primary-headline mb-4">Chọn món thanh toán</h3>
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">
+              {orderItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-primary-secondary">
+                  <div>
+                    <h4 className="font-bold">{item.name}</h4>
+                    <p className="text-sm">{item.price.toLocaleString('vi-VN')}đ</p>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleQuantityChange(item, -1)} className="w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400">-</button>
+                    <span className="font-bold text-lg w-8 text-center">{selectedItems[item.id]?.quantity || 0}</span>
+                    <button onClick={() => handleQuantityChange(item, 1)} className="w-8 h-8 rounded-full bg-primary-button text-white hover:bg-primary-highlight">+</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 md:mt-0">
+            <h3 className="text-lg font-bold text-primary-headline mb-4">Tổng kết</h3>
+            <div className="mb-4">
+              <h4 className="font-medium text-primary-paragraph mb-2">Phương thức</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => setPaymentMethod('cash')} className={`p-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${paymentMethod === 'cash' ? 'bg-primary-button text-white' : 'bg-gray-200'}`}><Banknote size={18} /> Tiền mặt</button>
+                <button onClick={() => { setPaymentMethod('transfer'); setShowQRCodeDialog(true); }} className={`p-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${paymentMethod === 'transfer' ? 'bg-primary-button text-white' : 'bg-gray-200'}`}><QrCode size={18} /> Chuyển khoản</button>
+              </div>
+            </div>
+            <div className="mb-4">
+              <h4 className="font-medium text-primary-paragraph mb-2">Giảm giá nhanh</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {quickDiscountOptions.map(opt => (
+                  <button key={opt.id} onClick={() => { setDiscountType(opt.type); setDiscountValue(opt.value); }} className={`p-2 rounded-lg font-semibold ${discountType === opt.type && discountValue === opt.value ? 'bg-primary-button text-white' : 'bg-gray-200'}`}>{opt.label}</button>
                 ))}
               </div>
             </div>
-  
-            <div className="mt-4 md:mt-0">
-              <h3 className="text-lg font-bold text-primary-headline mb-4">Tổng kết</h3>
-              <div className="mb-4">
-                <h4 className="font-medium text-primary-paragraph mb-2">Phương thức</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setPaymentMethod('cash')} className={`p-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${paymentMethod === 'cash' ? 'bg-primary-button text-white' : 'bg-gray-200'}`}><Banknote size={18} /> Tiền mặt</button>
-                  <button onClick={() => { setPaymentMethod('transfer'); setShowQRCodeDialog(true); }} className={`p-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${paymentMethod === 'transfer' ? 'bg-primary-button text-white' : 'bg-gray-200'}`}><QrCode size={18} /> Chuyển khoản</button>
-                </div>
-              </div>
-              <div className="mb-4">
-                <h4 className="font-medium text-primary-paragraph mb-2">Giảm giá nhanh</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {quickDiscountOptions.map(opt => (
-                    <button key={opt.id} onClick={() => { setDiscountType(opt.type); setDiscountValue(opt.value); }} className={`p-2 rounded-lg font-semibold ${discountType === opt.type && discountValue === opt.value ? 'bg-primary-button text-white' : 'bg-gray-200'}`}>{opt.label}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-primary-secondary rounded-xl p-4 space-y-2">
-                <div className="flex justify-between"><span>Tạm tính:</span> <span className="font-medium">{subtotal.toLocaleString('vi-VN')}đ</span></div>
-                {discountAmount > 0 && <div className="flex justify-between text-red-600"><span>Giảm giá:</span> <span className="font-medium">-{discountAmount.toLocaleString('vi-VN')}đ</span></div>}
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between text-xl font-bold"><span>Tổng cộng:</span> <span className="text-primary-button">{finalAmount.toLocaleString('vi-VN')}đ</span></div>
-                </div>
+            <div className="bg-primary-secondary rounded-xl p-4 space-y-2">
+              <div className="flex justify-between"><span>Tạm tính:</span> <span className="font-medium">{subtotal.toLocaleString('vi-VN')}đ</span></div>
+              {discountAmount > 0 && <div className="flex justify-between text-red-600"><span>Giảm giá:</span> <span className="font-medium">-{discountAmount.toLocaleString('vi-VN')}đ</span></div>}
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between text-xl font-bold"><span>Tổng cộng:</span> <span className="text-primary-button">{finalAmount.toLocaleString('vi-VN')}đ</span></div>
               </div>
             </div>
           </div>
-  
-          <div className="p-4 md:p-6 border-t flex flex-col md:flex-row justify-end gap-3">
-            <button onClick={() => setShowPartialPaymentDialog(false)} className="px-6 py-3 rounded-xl font-bold bg-gray-200 text-gray-800 hover:bg-gray-300">Hủy</button>
-            <button onClick={handleProcessPayment} disabled={finalAmount <= 0} className="px-6 py-3 rounded-xl font-bold bg-primary-button text-white hover:bg-primary-highlight disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"><Check size={20} /> Thanh toán</button>
-          </div>
+        </div>
+
+        <div className="p-4 md:p-6 border-t flex flex-col md:flex-row justify-end gap-3">
+          <button onClick={() => setShowPartialPaymentDialog(false)} className="px-6 py-3 rounded-xl font-bold bg-gray-200 text-gray-800 hover:bg-gray-300">Hủy</button>
+          <button onClick={handleProcessPayment} disabled={finalAmount <= 0} className="px-6 py-3 rounded-xl font-bold bg-primary-button text-white hover:bg-primary-highlight disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"><Check size={20} /> Thanh toán</button>
         </div>
       </div>
        {showQRCodeDialog && (
@@ -159,7 +157,7 @@ const PartialPaymentDialog = ({
             banks={banks}
           />
         )}
-    </>
+    </div>
     );
 };
   
@@ -276,17 +274,30 @@ const PaymentDialog = ({
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => { setShowPaymentDialog(false); setShowPartialPaymentDialog(true); }} className="w-full bg-blue-100 text-blue-800 hover:bg-blue-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2"><Split size={20} />Một phần</button>
-                  <button onClick={handleProcessPayment} className="w-full bg-primary-button hover:bg-primary-highlight text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><Check size={20}/>Hoàn tất</button>
+                  <button
+                    onClick={() => { setShowPaymentDialog(false); setShowPartialPaymentDialog(true); }}
+                    className="w-full bg-blue-100 text-blue-800 hover:bg-blue-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                  >
+                    <Split size={20} />Một phần
+                  </button>
+                  <button
+                    onClick={handleProcessPayment}
+                    className="w-full bg-primary-button hover:bg-primary-highlight text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                  >
+                    <Check size={20}/>Hoàn tất
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-2">
                     <button onClick={() => handlePrint('provisional')} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
                         <Printer size={20}/>In tạm tính
                     </button>
-                    <button onClick={() => setShowPaymentDialog(false)} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
-                        <ArrowLeft size={20}/>Quay lại
+                    <button onClick={() => handlePrint('kitchen')} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                        <Printer size={20}/>In phiếu bếp
                     </button>
                 </div>
+                <button onClick={() => setShowPaymentDialog(false)} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <ArrowLeft size={20}/>Quay lại
+                </button>
               </div>
             </div>
           </div>
