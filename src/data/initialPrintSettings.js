@@ -1,0 +1,27 @@
+// src/data/initialPrintSettings.js
+export const initialPrintSettings = {
+  fontFamily: 'Courier New',
+  lineSpacing: 2,
+  useSeparatorLine: true,
+  restaurantName: 'Nhà hàng ABC',
+  address: '123 Đường XYZ, Q.1, TP.HCM',
+  phone: '0909 123 456',
+  showStoreName: true,
+  headerStyle: { fontSize: 14, fontWeight: 'bold', fontStyle: 'normal' },
+  subHeaderStyle: { fontSize: 8, fontWeight: 'normal', fontStyle: 'normal' },
+  showDateTime: true,
+  showCashier: false,
+  orderInfoStyle: { fontSize: 9, fontWeight: 'normal', fontStyle: 'normal' },
+  itemsHeaderStyle: { fontSize: 9, fontWeight: 'bold', fontStyle: 'normal' },
+  itemsBodyStyle: { fontSize: 9, fontWeight: 'normal', fontStyle: 'normal' },
+  totalLabel: 'TỔNG CỘNG:',
+  thankYouMessage: 'Cảm ơn quý khách!',
+  showQrCode: true, // Đã thay đổi thành TRUE
+  totalStyle: { fontSize: 10, fontWeight: 'bold', fontStyle: 'normal' },
+  footerStyle: { fontSize: 8, fontWeight: 'normal', fontStyle: 'italic' },
+  showWifi: true,
+  wifiPassword: 'your_wifi_password',
+  wifiStyle: { fontSize: 9, fontWeight: 'bold', fontStyle: 'normal' },
+  defaultPrinter: '',
+  printerShareName: '',
+};
